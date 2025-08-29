@@ -1,7 +1,15 @@
+from pynput.mouse import Controller
+from tkinter import *
+from tkinter import ttk
+
 class CreateToolTip(object):
 	"""
 	create a tooltip for a given widget
 	"""
+
+	mouse = Controller()
+	current_mouse_position = mouse.position
+
 	def __init__(self, widget, text='widget info'):
 		self.waittime = 100     #miliseconds before popup appear
 		self.wraplength = 180   #pixels
@@ -33,7 +41,7 @@ class CreateToolTip(object):
 	def showtip(self, event=None):
 		x = y = 0
 		x, y, cx, cy = self.widget.bbox("insert")
-		x, y = mouse.position
+		x, y = self.mouse.position
 		# have popup slightly offset from mouse
 		x += 15
 		y += 15

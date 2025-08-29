@@ -2,14 +2,14 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 [project]
-name = "foxhole companion"
+name = "stockpiler"
 version = "0.0.1"
 authors = [
-  { name="pabelpanator", email="" },
+  { name="pabelpanator", email="p@f.com" },
 ]
 description = "A python program for interacting with foxhole"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -17,5 +17,5 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sc2umich-org/solids-vis-1"
-Issues = "https://github.com/sc2umich-org/solids-vis-1/issues"
+Homepage = ""
+Issues = ""

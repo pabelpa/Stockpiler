@@ -1,12 +1,13 @@
 import csv
 import os
-from menu import menu
 from tkinter import *
 from tkinter import ttk 
 import enum
-from tooltip import CreateToolTip
 import re
 import copy
+
+
+from stockpiler.tooltip import CreateToolTip
 
 class ButtonState(enum.Enum):
     ENABLED = 0
@@ -41,27 +42,41 @@ class Item(object):
     def __init__(self,row_data):
         for i,h in enumerate(self.headers):
             self.__setattr__(h,row_data[i])
-        self.modded_check =  "CheckImages//Modded//"+self.id+".png"
-        self.check =  "CheckImages//Default//"+self.id+".png"
-        self.icon =  "UI//"+self.id+".png"
-        self.enabled = "enabled"
+
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.dirname(os.path.dirname(file_dir))
+        self.modded_check = os.path.join(root_dir,"CheckImages","Modded",self.id+".png")
+        self.check = os.path.join(root_dir,"CheckImages","Default",self.id+".png")
+        self.icon = os.path.join(root_dir,"UI",str(self.id)+".png")
+ 
+        self.enabled = ButtonState.ENABLED
         if os.path.exists(self.icon):
-            self.img = PhotoImage(self.icon)
+            self.img = PhotoImage(file = os.path.abspath(self.icon))
+
+    
+    def make_btn(self,frame):
+        if os.path.exists(self.icon):
             self.btn = ttk.Button(
-                self.frame, 
+                frame, 
                 image=self.img, 
                 style="EnabledButton.TButton",
-                command=self.toggle
+                command=lambda: self.toggle()
             )
-            self.ttp = CreateToolTip(self.btn,re.sub('\'', '', self.name))
+        else:
+            return
+        self.btn.image = self.img
+        self.ttp = CreateToolTip(self.btn,re.sub('\'', '', self.name))
+        return self.btn
             
 
     def toggle(self):
         # toggle is designed to work only if the category and faction are turned on
+
         if self.enabled == ButtonState.ENABLED:
+
             self.enabled = ButtonState.MANUAL_DISABLED
             self.btn.config(style="ManualDisabledButton.TButton")
-        if self.enabled == ButtonState.MANUAL_DISABLED:
+        elif self.enabled == ButtonState.MANUAL_DISABLED:
             self.enabled = ButtonState.ENABLED
             self.btn.config(style="EnabledButton.TButton")
 
@@ -82,7 +97,7 @@ class ItemList():
 	
     def __init__(self):
         self.data = []
-        with open('ItemNumbering.csv', 'rt') as f_input:
+        with open('ItemNumberingnew.csv', 'rt') as f_input:
             csv_input = csv.reader(f_input, delimiter=',')
             # Skips first line
             header = next(csv_input)
@@ -98,16 +113,23 @@ class ItemList():
             # Skips first line
             header = next(csv_input)
             for rowdata in csv_input:
-                item_id = int(rowdata[0])
-                enable_status = int(rowdata[0])
-                self.data[item_id].enabled = ButtonState(enable_status)
+                try:
+                    item_id = int(rowdata[0])
+                except:
+                    continue
+                try:
+                    enable_status = int(rowdata[1])
+                    self.data[item_id].enabled = ButtonState(enable_status)
+                except ValueError:
+                    self.data[item_id].enabled = ButtonState.DISABLED
+
 
     def filter(self,filter_dict):
 
         out_data = []
         for d in self.data:
             matched = True
-            for k,v in filter_dict:
+            for k,v in filter_dict.items():
                 if getattr(d,k)!=v:
                     matched = False
                     break
@@ -124,9 +146,6 @@ class ItemList():
         for item in self.data:
             if item.stockpile_category == category:
                 item.enabled = state
-
-master_list = ItemList()
-ItemList.master_data = master_list.data
 
 category_mapping = {
     "Small Arms":[
@@ -174,7 +193,7 @@ category_mapping = {
         "Engineering Uniforms",
         "Recon Uniforms",
     ],
-    "Vehicles":[
+    "Vehicle":[
         "Utility",
         "Armor",
         "Light Armor",
