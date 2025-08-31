@@ -48,6 +48,7 @@ class Item(object):
         self.modded_check = os.path.join(root_dir,"CheckImages","Modded",self.id+".png")
         self.check = os.path.join(root_dir,"CheckImages","Default",self.id+".png")
         self.icon = os.path.join(root_dir,"UI",str(self.id)+".png")
+        self.quantity = 0
  
         self.enabled = ButtonState.ENABLED
         if os.path.exists(self.icon):
