@@ -1,17 +1,25 @@
-def ItemScan(screen, garbage):
+import logging
+import cv2
+import datetime
+import numpy as np
+import glob
+
+from stockpiler.match_template_best_scale import matchTemplateBestScale
+from stockpiler.popup import popup
+
+def ItemScan(screen,config):
 	global LastStockpile
-	global bestTextScale
 	global bestIconScale
 
 	resC = None
 	res = None
-	if menu.Set.get() == 0:
+	if config.Set.get() == 0:
 		findshirtC = cv2.imread('CheckImages//Default//86C.png', cv2.IMREAD_GRAYSCALE)
 		findshirt = cv2.imread('CheckImages//Default//86.png', cv2.IMREAD_GRAYSCALE)
 
-		if (menu.experimentalResizing.get() == 1):
+		if (config.experimentalResizing.get() == 1):
 			if (bestIconScale == None):
-				if (foxhole_height == 1080):
+				if (config.foxhole_height == 1080):
 					bestIconScale = 1.0
 					print("Best scale for ITEM ICONS is: " + str(bestIconScale))
 				else:
@@ -36,6 +44,9 @@ def ItemScan(screen, garbage):
 			print("Exception: ", e)
 			print("You don't have the individual Shirt yet in ItemScan")
 			logging.info(str(datetime.datetime.now()) + " Failed loading modded individual shirt icon in ItemScan " + str(e))
+	
+	
+	
 	try:
 		if (resC == None): resC = cv2.matchTemplate(screen, findshirtC, cv2.TM_CCOEFF_NORMED)
 	except Exception as e:
@@ -48,8 +59,11 @@ def ItemScan(screen, garbage):
 		print("Exception: ", e)
 		print("Looks like you're missing the individual shirts in ItemScan")
 		logging.info(str(datetime.datetime.now()) + " Maybe missing individual shirt icon in ItemScan " + str(e))
+
+
 	threshold = .9
 	FoundShirt = False
+
 	try:
 		if np.amax(res) > threshold:
 			print("Found Shirts")
@@ -59,16 +73,17 @@ def ItemScan(screen, garbage):
 		print("Exception: ", e)
 		print("Don't have the individual shirts icon or not looking at a stockpile in ItemScan")
 		logging.info(str(datetime.datetime.now()) + " Don't have the individual shirts icon or not looking at a stockpile in ItemScan " + str(e))
+	
 	try:
 		if np.amax(resC) > threshold:
 			print("Found Shirt Crate")
-			#print(np.amax(resC))
 			y, x = np.unravel_index(resC.argmax(), resC.shape)
 			FoundShirt = True
 	except Exception as e:
 		print("Exception: ", e)
 		print("Don't have the shirt crate icon or not looking at a stockpile in ItemScan")
 		logging.info(str(datetime.datetime.now()) + " Don't have the shirt crate icon or not looking at a stockpile in ItemScan " + str(e))
+	
 	if not FoundShirt:
 		print("Found nothing.  Either don't have shirt icon(s) or not looking at a stockpile in ItemScan")
 		y = 0
@@ -80,7 +95,7 @@ def ItemScan(screen, garbage):
 	else:
 		stockpile = screen[y - 32:1080, x - 11:x + 589]
 
-	if menu.debug.get() == 1:
+	if config.debug.get() == 1:
 		cv2.imshow('Stockpile in this image in ItemScan?', stockpile)
 		cv2.waitKey(0)
 	# UNCOMMENT IF TESTING A SPECIFIC IMAGE
@@ -91,12 +106,18 @@ def ItemScan(screen, garbage):
 	LastStockpile = screen
 
 	# Image clips for each type of stockpile should be in this array below
-	StockpileTypes = (('CheckImages//Seaport.png', 'Seaport', 0), ('Checkimages//StorageDepot.png', 'Storage Depot', 1),
-					  ('Checkimages//Outpost.png', 'Outpost', 2), ('Checkimages//Townbase.png', 'Town Base', 3),
-					  ('Checkimages//RelicBase.png', 'Relic Base', 4),
-					  ('Checkimages//BunkerBase.png', 'Bunker Base', 5),
-					  ('Checkimages//Encampment.png', 'Encampment', 6),
-					  ('Checkimages//SafeHouse.png', 'Safe House', 7))
+	StockpileTypes = (
+		('CheckImages//Seaport.png', 'Seaport', 0), 
+		('Checkimages//StorageDepot.png', 'Storage Depot', 1),
+		('Checkimages//Outpost.png', 'Outpost', 2), 
+		('Checkimages//Townbase.png', 'Town Base', 3),
+		('Checkimages//RelicBase.png', 'Relic Base', 4),
+		('Checkimages//BunkerBase.png', 'Bunker Base', 5),
+		('Checkimages//Encampment.png', 'Encampment', 6),
+		('Checkimages//SafeHouse.png', 'Safe House', 7)
+	)
+
+
 	# Check cropped stockpile image for each location type image
 	FoundStockpileType = None
 	FoundStockpileTypeName = None
@@ -106,16 +127,15 @@ def ItemScan(screen, garbage):
 	for image in StockpileTypes:
 		try:
 			findtype = cv2.imread(image[0], cv2.IMREAD_GRAYSCALE)
-			if menu.debug.get() == 1:
+			if config.debug.get() == 1:
 				cv2.imshow("Looking for this", findtype)
 				cv2.waitKey(0)
-			if (menu.experimentalResizing.get() == 1): findtype = cv2.resize(findtype, (int(findtype.shape[1]*bestTextScale), int(findtype.shape[0]*bestTextScale)))
+			if (config.experimentalResizing.get() == 1): 
+				findtype = cv2.resize(findtype, (int(findtype.shape[1]*config.best_text_scale), int(findtype.shape[0]*config.best_text_scale)))
 			res = cv2.matchTemplate(stockpile, findtype, cv2.TM_CCOEFF_NORMED)
 			# Threshold is a bit lower for types as they are slightly see-thru
 			typethreshold = .65
 			score = np.amax(res)
-			#print("Checking:", image[1])
-			#print(score)
 			if (score > typethreshold and score > highestScore):
 				highestScore = score
 				y, x = np.unravel_index(res.argmax(), res.shape)
@@ -134,7 +154,8 @@ def ItemScan(screen, garbage):
 	if (FoundStockpileType != None):
 		if FoundStockpileTypeName == "Seaport" or FoundStockpileTypeName == "Storage Depot":
 			findtab = cv2.imread('CheckImages//Tab.png', cv2.IMREAD_GRAYSCALE)
-			if (menu.experimentalResizing.get() == 1): findtab = cv2.resize(findtab, (int(findtab.shape[1]*bestTextScale), int(findtab.shape[0]*bestTextScale)))
+			if (config.experimentalResizing.get() == 1): 
+				findtab = cv2.resize(findtab, (int(findtab.shape[1]*config.best_text_scale), int(findtab.shape[0]*config.best_text_scale)))
 			res = cv2.matchTemplate(stockpile, findtab, cv2.TM_CCOEFF_NORMED)
 			tabthreshold = .6
 			cv2.imwrite('stockpile.jpg', stockpile)
@@ -143,7 +164,7 @@ def ItemScan(screen, garbage):
 				y, x = np.unravel_index(res.argmax(), res.shape)
 				# Seaports and Storage Depots have the potential to have named stockpiles, so grab the name
 				#print("bestTextScale:" + str(bestTextScale))
-				stockpilename = stockpile[int(y - 5*bestTextScale):int(y + 17*bestTextScale), int(x - 150*bestTextScale):int(x - 8*bestTextScale)]
+				stockpilename = stockpile[int(y - 5*config.best_text_scale):int(y + 17*config.best_text_scale), int(x - 150*config.best_text_scale):int(x - 8*config.best_text_scale)]
 				# Make a list of all current stockpile name images
 				currentstockpiles = glob.glob("Stockpiles/*.png")
 				# print(currentstockpiles)
@@ -168,7 +189,7 @@ def ItemScan(screen, garbage):
 						# NewStockpileFilename = 'Stockpiles//' + NewStockpileName + '.png'
 						# It's a new stockpile, so save an images of the name as well as the cropped stockpile itself
 						cv2.imwrite('Stockpiles//' + NewStockpileName + '.png', stockpilename)
-						if menu.ImgExport.get() == 1:
+						if config.ImgExport.get() == 1:
 							cv2.imwrite('Stockpiles//' + NewStockpileName + ' image.png', stockpile)
 						ThisStockpileName = NewStockpileName
 			else:
@@ -199,12 +220,12 @@ def ItemScan(screen, garbage):
 	if ThisStockpileName == "TheyLeftTheStockpileNameBlank":
 		pass
 	else:
-		if menu.Set.get() == 0:
+		if config.Set.get() == 0:
 			folder = "CheckImages//Default//"
 		else:
 			folder = "CheckImages//Modded//"
 		if ThisStockpileName != "None":
-			if menu.ImgExport.get() == 1:
+			if config.ImgExport.get() == 1:
 				cv2.imwrite('Stockpiles//' + ThisStockpileName + ' image.png', stockpile)
 			if FoundStockpileType in CrateList:
 				print("Crate Type")
@@ -235,18 +256,18 @@ def ItemScan(screen, garbage):
 			numbers = {}
 			for number in items.numbers:
 				findnum = cv2.imread(number[0], cv2.IMREAD_GRAYSCALE)
-				if (menu.experimentalResizing.get() == 1 and bestIconScale != 1.0):
+				if (config.experimentalResizing.get() == 1 and bestIconScale != 1.0):
 					findnum = cv2.resize(findnum, (int(findnum.shape[1] * bestIconScale), int(findnum.shape[0] * bestIconScale)))
 				numbers[number[1]] = findnum
 			
-			threshold = .98 if (menu.experimentalResizing.get() == 1 and foxhole_height != 1080) else .99   
+			threshold = .98 if (config.experimentalResizing.get() == 1 and foxhole_height != 1080) else .99   
 			for image in StockpileImages:
 				checked += 1
 				if str(image[4]) == '1':
 					if os.path.exists(image[1]):
 						try:
 							findimage = cv2.imread(image[1], cv2.IMREAD_GRAYSCALE)
-							if (menu.experimentalResizing.get() == 1 and bestIconScale != 1.0): findimage = cv2.resize(findimage, (int(findimage.shape[1] * bestIconScale), int(findimage.shape[0] * bestIconScale)), interpolation=cv2.INTER_LANCZOS4)
+							if (config.experimentalResizing.get() == 1 and bestIconScale != 1.0): findimage = cv2.resize(findimage, (int(findimage.shape[1] * bestIconScale), int(findimage.shape[0] * bestIconScale)), interpolation=cv2.INTER_LANCZOS4)
 							
 							res = cv2.matchTemplate(stockpile, findimage, cv2.TM_CCOEFF_NORMED)
 							
@@ -323,15 +344,15 @@ def ItemScan(screen, garbage):
 									stockpilecontents.append(list((image[0], image[2], quantity, itemsort, 0)))
 						except Exception as e:
 							print("Exception: ", e)
-							if menu.debug.get() == 1:
+							if config.debug.get() == 1:
 								print("Failed while looking for: ", str(image[2]))
 								logging.info(str(datetime.datetime.now()) + "Failed while looking for (missing?): ", str(image[2]) + str(e))
 							pass
 					else:
-						if menu.debug.get() == 1:
+						if config.debug.get() == 1:
 							print("File missing:",str(image[1]), str(image[2]))
 				else:
-					if menu.debug.get() == 1:
+					if config.debug.get() == 1:
 						print("Skipping icon: ", str(image[2]), "because ItemNumbering.csv lists it as impossible/never displayed in stockpile images (like pistol ammo and crates of warheads)", image[4])
 					pass
 
@@ -341,7 +362,7 @@ def ItemScan(screen, garbage):
 			if ThisStockpileName in ("Seaport","Storage Depot","Outpost","Town Base","Relic Base","Bunker Base","Encampment","Safe House"):
 				ThisStockpileName = "Public"
 
-			if menu.CSVExport.get() == 1:
+			if config.CSVExport.get() == 1:
 				stockpilefile = open("Stockpiles//" + ThisStockpileName + ".csv", 'w')
 				stockpilefile.write(ThisStockpileName + ",\n")
 				stockpilefile.write(FoundStockpileTypeName + ",\n")
@@ -359,11 +380,11 @@ def ItemScan(screen, garbage):
 				fp.close()
 
 
-			if menu.updateBot.get() == 1 and ThisStockpileName != "Public":
+			if config.updateBot.get() == 1 and ThisStockpileName != "Public":
 				requestObj = {
-					"password": menu.BotPassword.get(),
+					"password": config.BotPassword.get(),
 					"name": ThisStockpileName,
-					"guildID": menu.BotGuildID.get()
+					"guildID": config.BotGuildID.get()
 				}
 				data = []
 				for x in items.sortedcontents:
@@ -373,7 +394,7 @@ def ItemScan(screen, garbage):
 				# print("Bot Data", data)
 
 				try:
-					r = requests.post(menu.BotHost.get(), json=requestObj, timeout=10)
+					r = requests.post(config.BotHost.get(), json=requestObj, timeout=10)
 					response = r.json()
 					
 					print("=============== [Storeman Bot Link: Sending to Server] ===============")
@@ -390,7 +411,7 @@ def ItemScan(screen, garbage):
 					print("Exception: ", e)
 
 
-			if menu.XLSXExport.get() == 1:
+			if config.XLSXExport.get() == 1:
 				workbook = xlsxwriter.Workbook("Stockpiles//" + ThisStockpileName + ".xlsx")
 				worksheet = workbook.add_worksheet()
 				worksheet.write(0, 0, ThisStockpileName)

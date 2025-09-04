@@ -4,10 +4,15 @@ import logging
 import datetime
 import os
 from pynput.mouse import Controller
+import threading
+
 from stockpiler.items import ItemList
 from stockpiler.filter_ui import FilterTab
 from stockpiler.settings_ui import SettingsTab
 from stockpiler.table_ui import TableTab
+from stockpiler.search_image import SearchImage
+from stockpiler.learn import Learn
+from stockpiler.itemscan import ItemScan
 # from stockpiler.table_ui import TableTab
 
 
@@ -103,6 +108,8 @@ class Stockpiler():
 
 		self.style = s
 
+		self.threads = []
+		self.thread_count = 0
 
 		if os.path.exists("Config.txt"):
 			with open("Config.txt") as file:
@@ -178,7 +185,34 @@ class Stockpiler():
 		settings_ui = SettingsTab(self)
 		settings_ui.set_hotkeys()
 
-		table_ui = TableTab(self)
+		self.table_ui = TableTab(self)
 	
+	def update_results(self,data):
+		new_results = ItemList()
+
+		for item in new_results.data:
+			qnt = data[item.name]
+			item.quantity = qnt
+
+		self.table_ui.results = new_results
+
+		self.table_ui.print_table()
+
 	def run(self):
 		self.main_widget.mainloop()
+
+	def scan(self):
+		if self.Learning.get() == 0:
+			screen = SearchImage(self, "", "")
+		else:
+			Learn(0, "img")
+
+
+		args = (screen, self)
+		logging.info(str(datetime.datetime.now()) + " Starting scan thread: " + str(self.thread_count))
+
+		thread = threading.Thread(target=ItemScan, args=args)
+		thread.daemon=True
+		thread.start()
+		self.thread_count+=1
+		self.threads.append(thread)

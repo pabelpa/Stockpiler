@@ -35,9 +35,10 @@ class TableTab():
         self.canvas.create_window((0, 0), window=self.frame, anchor="nw", height="1000p", width="402p")
         self.results = ItemList()
 
-        self.print_table(self.results)
+        self.print_table()
 
-    def print_table(self,data):
+    def print_table(self):
+        data = self.results
         file_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.dirname(os.path.dirname(file_dir))
         row = 0
@@ -45,7 +46,7 @@ class TableTab():
         for i,(category,custom_categories) in enumerate(category_mapping.items()):
 
             catimg = PhotoImage(file=os.path.join(root_dir,"UI","cat" + str(i+1) + ".png"))
-            cat_label = ttk.Label(self.frame, image=catimg,text=category)
+            cat_label = ttk.Label(self.frame, image=catimg,text=category,width=402)
             cat_label.grid(row=row, column=column, sticky="NSEW")
             cat_label.image = catimg
             row+=1
@@ -59,7 +60,7 @@ class TableTab():
                 if len(print_items)==0:
                     continue
                 height = 45*len(print_items)
-                cc_text = ttk.Label(master=self.frame,text=custom_category)
+                cc_text = ttk.Label(master=self.frame,text=custom_category,width=402)
                 cc_text.grid(row=row, column=0, sticky="ew")
                 row+=1
                 ResultSheet = Sheet(self.frame, data=(data),height=height)
@@ -68,33 +69,10 @@ class TableTab():
                 ResultSheet.set_options(table_bg="grey75", header_bg="grey55", index_bg="grey55", top_left_bg="grey15", frame_bg="grey15")
                 row+=1
 				
-            #     print(items_i)
-			# 	found_items = []
-			# 	for item in items_i:
-			# 		if item in data:
-			# 			found_items.append(d)
-			# 		if hasattr(item,"img"):
-			# 			if column < 8:
-			# 				item_btn = item.make_btn(self.frame)
-			# 				if item_btn:
-			# 					item_btn.grid(row=row, column=column, sticky="W", padx=2, pady=2)
-			# 				column += 1
-			# 			else:
-			# 				row += 1
-			# 				column = 0
-			# 				item_btn = item.make_btn(self.frame)
-			# 				if item_btn:
-			# 					item_btn.grid(row=row, column=column, sticky="W", padx=2, pady=2)
-			# 				column += 1
-			# 	row+=1
-			# 	column = 0
 
             catsep = ttk.Separator(self.frame, orient=HORIZONTAL)
             catsep.grid(row=row, columnspan=8, sticky="ew", pady=10)
             row+=1
-        # small_arms_res = ttk.Frame(self.canvas)
-        # small_arms_res.pack(fill='x')
-        # sa_icon = ttk
-        # sa_title = ttk.Label(master=small_arms_res,text="Small Arms").pack(side=LEFT)
+
 
 
