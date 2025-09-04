@@ -179,19 +179,21 @@ def ItemScan(screen,config):
 							# Named stockpile is one already seen
 							found = 1
 							ThisStockpileName = (image[11:(len(image) - 4)])
+				
 				if found != 1:
-					newstockpopup(stockpilename)
-					PopupWindow.wait_window()
-					if NewStockpileName == "" or NewStockpileName.lower() == "public":
+					p = popup(config,"new_stock")
+					p.popup_window.wait_window()
+					new_stockpile_name = config.new_stockpile_name
+					if new_stockpile_name == "" or new_stockpile_name.lower() == "public":
 						popup("BlankName")
 						ThisStockpileName = "TheyLeftTheStockpileNameBlank"
 					else:
-						# NewStockpileFilename = 'Stockpiles//' + NewStockpileName + '.png'
+						# NewStockpileFilename = 'Stockpiles//' + new_stockpile_name + '.png'
 						# It's a new stockpile, so save an images of the name as well as the cropped stockpile itself
-						cv2.imwrite('Stockpiles//' + NewStockpileName + '.png', stockpilename)
+						cv2.imwrite('Stockpiles//' + new_stockpile_name + '.png', stockpilename)
 						if config.ImgExport.get() == 1:
-							cv2.imwrite('Stockpiles//' + NewStockpileName + ' image.png', stockpile)
-						ThisStockpileName = NewStockpileName
+							cv2.imwrite('Stockpiles//' + new_stockpile_name + ' image.png', stockpile)
+						ThisStockpileName = new_stockpile_name
 			else:
 				# It's not a named stockpile, so just call it by the type of location (Bunker Base, Encampment, etc)
 				print("Didn't find the Tab, so it looks like it's not a named stockpile")
