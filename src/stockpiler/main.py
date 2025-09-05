@@ -5,6 +5,7 @@ import datetime
 import os
 from pynput.mouse import Controller
 import threading
+import copy
 
 from stockpiler.items import ItemList
 from stockpiler.filter_ui import FilterTab
@@ -207,8 +208,8 @@ class Stockpiler():
 		else:
 			Learn(0, "img")
 
-
-		args = (screen, self)
+		filtered_items = copy.deepcopy(self.master_list)
+		args = (screen, self, filtered_items)
 		logging.info(str(datetime.datetime.now()) + " Starting scan thread: " + str(self.thread_count))
 
 		thread = threading.Thread(target=ItemScan, args=args)
@@ -216,3 +217,7 @@ class Stockpiler():
 		thread.start()
 		self.thread_count+=1
 		self.threads.append(thread)
+		
+		thread.join()
+		self.table_ui.results = filtered_items
+		self.table_ui.print_table()

@@ -175,38 +175,22 @@ class SettingsTab():
 
 	def set_hotkeys(self):
 		clear_hotkeys()
-		if self.parent_widget.grabmods[0] == "0":
-			grabshift = ""
-		else:
-			grabshift = "\"shift\","
-		if self.parent_widget.grabmods[1] == "0":
-			grabctrl = ""
-		else:
-			grabctrl = "\"control\","
-		if self.parent_widget.grabmods[2] == "0":
-			grabalt = ""
-		else:
-			grabalt = "\"alt\","
-		if self.parent_widget.scanmods[0] == "0":
-			scanshift = ""
-		else:
-			scanshift = "\"shift\","
-		if self.parent_widget.scanmods[1] == "0":
-			scanctrl = ""
-		else:
-			scanctrl = "\"control\","
+		keys = []
+		if self.parent_widget.scanmods[0] == "1":
+			keys.append("shift")
+		if self.parent_widget.scanmods[1] == "1":
+			keys.append("control")
 		if self.parent_widget.scanmods[2] == "0":
-			scanalt = ""
-		else:
-			scanalt = "\"alt\","
-		bindingsstring = "self.parent_widget.bindings = [[[" + grabshift + grabctrl + grabalt + "\"" + self.parent_widget.grabhotkeystring +\
-						"\"], None, GrabStockpileImage],[[" + scanshift + scanctrl + scanalt + "\"" + \
-						self.parent_widget.scanhotkeystring + "\"], None, LearnOrNot],]"
-		# exec(bindingsstring)
-		register_hotkeys(self.parent_widget.bindings)
+			keys.append("alt")
+		keys.append(self.parent_widget.scanhotkeystring)
+		
+		
+		bindings = [
+			[keys,None,lambda :self.parent_widget.scan()]
+		]
+		register_hotkeys(bindings)
 		start_checking_hotkeys()
-		if self.parent_widget.grabhotkeystring == self.parent_widget.scanhotkeystring:
-			self.popup = popup("DuplicateHotkeys")
+
 
 	def get_save_settings_func(self):
 		def out_func():

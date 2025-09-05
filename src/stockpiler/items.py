@@ -5,7 +5,8 @@ from tkinter import ttk
 import enum
 import re
 import copy
-
+import cv2
+import numpy as np
 
 from stockpiler.tooltip import CreateToolTip
 
@@ -16,6 +17,21 @@ class ButtonState(enum.Enum):
     FACTION_DISABLED = 3
 
 class Item(object):
+    
+    numbers = {
+        "0":cv2.imread('CheckImages//num0.png', cv2.IMREAD_GRAYSCALE), 
+        "1":cv2.imread('CheckImages//num1.png', cv2.IMREAD_GRAYSCALE), 
+        "2":cv2.imread('CheckImages//num2.png', cv2.IMREAD_GRAYSCALE),
+        "3":cv2.imread('CheckImages//num3.png', cv2.IMREAD_GRAYSCALE), 
+        "4":cv2.imread('CheckImages//num4.png', cv2.IMREAD_GRAYSCALE), 
+        "5":cv2.imread('CheckImages//num5.png', cv2.IMREAD_GRAYSCALE),
+		"6":cv2.imread('CheckImages//num6.png', cv2.IMREAD_GRAYSCALE),
+        "7":cv2.imread('CheckImages//num7.png', cv2.IMREAD_GRAYSCALE), 
+        "8":cv2.imread('CheckImages//num8.png', cv2.IMREAD_GRAYSCALE),
+		"9":cv2.imread('CheckImages//num9.png', cv2.IMREAD_GRAYSCALE), 
+        "k+":cv2.imread('CheckImages//numk.png', cv2.IMREAD_GRAYSCALE)
+    }
+    
     headers = [
         "id",
         "i",
@@ -45,10 +61,15 @@ class Item(object):
 
         file_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.dirname(os.path.dirname(file_dir))
-        self.modded_check = os.path.join(root_dir,"CheckImages","Modded",self.id+".png")
-        self.check = os.path.join(root_dir,"CheckImages","Default",self.id+".png")
+        self.img_paths = {
+            "modded": os.path.join(root_dir,"CheckImages","Modded",self.id+".png"),
+            "default":os.path.join(root_dir,"CheckImages","Default",self.id+".png"),
+            "modded_c":os.path.join(root_dir,"CheckImages","Default",self.id+"C.png"),
+            "default_c":os.path.join(root_dir,"CheckImages","Default",self.id+"C.png")
+        }
         self.icon = os.path.join(root_dir,"UI",str(self.id)+".png")
         self.quantity = 0
+        self.c_quantity = 0
  
         self.enabled = ButtonState.ENABLED
         if os.path.exists(self.icon):
@@ -81,12 +102,109 @@ class Item(object):
             self.enabled = ButtonState.ENABLED
             self.btn.config(style="EnabledButton.TButton")
 
+    def set_check_img(self,stockpile_type,tag):
+        self.tag = tag
+        self.search_crates=False
+        self.search_normal=False
+            
+        if stockpile_type in [0,1]:
+            if self.crate_exists:
+                self.search_crates=True
+            if self.stockpile_category=="Vehicle"or self.stockpile_category=="Shippable":
+                self.search_normal= True
+        else:
+            self.search_normal=True
+
+    def set_scales(self,icon_scale,text_scale):
+        self.icon_scale=icon_scale
+        self.text_scale = text_scale
+        new_numbers = {}
+        for number,image in Item.numbers.items():
+            new_numbers[number]=cv2.resize(
+                    image, 
+                    (int(image.shape[1] * icon_scale), int(image.shape[0] * icon_scale))
+                )
+            
+        self.numbers=new_numbers
+
+    def get_qnty(self,stockpile,threshold):
+        if self.search_normal:
+            img_path = self.img_paths[self.tag]
+            not os.path.exists(img_path)
+            findimage = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            if self.icon_scale != 1.0: 
+                findimage = cv2.resize(
+                    findimage, 
+                    (int(findimage.shape[1] * self.icon_scale), int(findimage.shape[0] * self.icon_scale)), 
+                    interpolation=cv2.INTER_LANCZOS4
+                )
+            self.quantity=self.__get_qnty(findimage,stockpile,threshold)
+
+        if self.search_crates:
+            img_path = self.img_paths[self.tag+"_c"]
+            not os.path.exists(img_path)
+            findimage = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            if self.icon_scale != 1.0: 
+                findimage = cv2.resize(
+                    findimage, 
+                    (int(findimage.shape[1] * self.icon_scale), int(findimage.shape[0] * self.icon_scale)), 
+                    interpolation=cv2.INTER_LANCZOS4
+                )
+            self.c_quantity = self.__get_qnty(findimage,stockpile,threshold)
+
+    def __get_qnty(self,icon,stockpile,threshold):
+        
+        res = cv2.matchTemplate(stockpile, icon, cv2.TM_CCOEFF_NORMED)
+					
+        if np.amax(res) > threshold:
+						
+            y, x = np.unravel_index(res.argmax(), res.shape)
+						# Found a thing, now find amount
+
+            numberarea = stockpile[
+                int(y+8*self.text_scale):int(y+28*self.text_scale), 
+                int(x+45*self.text_scale ):int(x+87*self.text_scal)
+            ]
+
+            numberlist = []
+            for number in range(10):
+                number_name = str(number)
+                number_img = self.numbers[number_name]
+                
+                resnum = cv2.matchTemplate(numberarea, number_img, cv2.TM_CCOEFF_NORMED)
+
+                threshold = .9
+                x_pos = np.where(resnum >= threshold)[1]
+                # It only looks for up to 3 of each number for each item, since after that it would be a "k+" scenario, which never happens in stockpiles
+                # This will need to be changed to allow for more digits whenever it does in-person looks at BB stockpiles and such, where it will show up to 5 digits
+
+                numberlist+=[(x,number_name) for x in x_pos]
+
+            numberlist.sort(key=lambda y: y[0])
+
+            number_string = "".join([nl[1] for nl in numberlist])
+            quantity = int(number_string)						
+
+            k_res = cv2.matchTemplate(numberarea, self.numbers["k+"] , cv2.TM_CCOEFF_NORMED)
+            if np.amax(k_res) > threshold:
+                quantity=quantity*1000
+            return quantity
+        
+    def get_contents(self):
+        contents = []
+        if self.quantity!=0:
+            contents.append([self.id, self.name, self.quantity,self.category_sort, self.in_category_sort,0])
+        if self.c_quantity!=0:
+            contents.append([self.id, self.name+" Crate", self.c_quantity, self.category_sort, self.in_category_sort,1])
+        
+        return contents
+
+
+
+
 
 class ItemList():
-    numbers = (('CheckImages//num0.png', "0"), ('CheckImages//num1.png', "1"), ('CheckImages//num2.png', "2"),
-			   ('CheckImages//num3.png', "3"), ('CheckImages//num4.png', "4"), ('CheckImages//num5.png', "5"),
-			   ('CheckImages//num6.png', "6"), ('CheckImages//num7.png', "7"), ('CheckImages//num8.png', "8"),
-			   ('CheckImages//num9.png', "9"), ('CheckImages//numk.png', "k+"))
+
     stockpilecontents = []
     sortedcontents = []
     slimcontents = []
@@ -116,6 +234,7 @@ class ItemList():
             for rowdata in csv_input:
                 try:
                     item_id = int(rowdata[0])
+                    print(item_id)
                 except:
                     continue
                 try:

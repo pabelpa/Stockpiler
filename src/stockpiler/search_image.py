@@ -5,7 +5,6 @@ from PIL import ImageTk, ImageGrab, Image
 import datetime
 import logging
 
-from stockpiler.grab_stockpile_image import GrabStockpileImage
 from stockpiler.match_template_best_scale import matchTemplateBestScale
 
 def SearchImage(config, Pass, LearnImage):
