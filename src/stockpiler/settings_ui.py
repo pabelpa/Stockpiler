@@ -180,7 +180,7 @@ class SettingsTab():
 			keys.append("shift")
 		if self.parent_widget.scanmods[1] == "1":
 			keys.append("control")
-		if self.parent_widget.scanmods[2] == "0":
+		if self.parent_widget.scanmods[2] == "1":
 			keys.append("alt")
 		keys.append(self.parent_widget.scanhotkeystring)
 		

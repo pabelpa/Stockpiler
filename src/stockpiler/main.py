@@ -203,6 +203,7 @@ class Stockpiler():
 		self.main_widget.mainloop()
 
 	def scan(self):
+		print("scanning")
 		if self.Learning.get() == 0:
 			screen = SearchImage(self, "", "")
 		else:
