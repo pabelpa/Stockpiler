@@ -267,6 +267,14 @@ class ItemList():
             if item.stockpile_category == category:
                 item.enabled = state
 
+    def thread_copy(self):
+        new_list = copy.copy(self)
+    
+        for i in range(len(self.data)):
+            new_list.data[i]=copy.copy(self.data[i])
+        
+        return new_list
+
 category_mapping = {
     "Small Arms":[
         "Rifle",

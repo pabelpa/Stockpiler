@@ -5,6 +5,7 @@ import numpy as np
 import glob
 import os
 import requests
+import xlsxwriter
 
 from stockpiler.match_template_best_scale import matchTemplateBestScale
 from stockpiler.popup import popup

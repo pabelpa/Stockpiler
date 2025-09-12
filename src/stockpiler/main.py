@@ -209,7 +209,7 @@ class Stockpiler():
 		else:
 			Learn(0, "img")
 
-		filtered_items = copy.deepcopy(self.master_list)
+		filtered_items = self.master_list.thread_copy()
 		args = (screen, self, filtered_items)
 		logging.info(str(datetime.datetime.now()) + " Starting scan thread: " + str(self.thread_count))
 
