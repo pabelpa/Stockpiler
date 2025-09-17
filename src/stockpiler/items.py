@@ -75,7 +75,6 @@ class Item(object):
         if os.path.exists(self.icon):
             self.img = PhotoImage(file = os.path.abspath(self.icon))
 
-    
     def make_btn(self,frame):
         if os.path.exists(self.icon):
             self.btn = ttk.Button(
