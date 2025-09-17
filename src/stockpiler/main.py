@@ -39,6 +39,7 @@ class Stockpiler():
 		self.category = [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0]]
 		self.faction = [0, 0]
 		self.topscroll = 0
+		self.learning = BooleanVar(value=False)
 		self.BotHost = StringVar()
 		self.BotPassword = StringVar()
 		self.BotGuildID = StringVar()
@@ -204,10 +205,9 @@ class Stockpiler():
 
 	def scan(self):
 		print("scanning")
-		if self.Learning.get() == 0:
-			screen = SearchImage(self, "", "")
-		else:
-			Learn(0, "img")
+		screen = SearchImage(self, "", "")
+		if self.Learning.get() == 1:
+			Learn(self, screen)
 
 		filtered_items = self.master_list.thread_copy()
 		args = (screen, self, filtered_items)

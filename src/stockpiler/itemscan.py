@@ -236,7 +236,7 @@ def ItemScan(screen,config,items):
 				if item.enabled != ButtonState.ENABLED:
 					continue
 
-				if item.ind_exist !=1:
+				if item.ind_exists !=1:
 					if config.debug.get() == 1:
 						print("Skipping icon: ", item.name, "because ItemNumbering.csv lists it as impossible/never displayed in stockpile images (like pistol ammo and crates of warheads)")
 					continue

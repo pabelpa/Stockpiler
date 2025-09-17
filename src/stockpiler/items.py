@@ -302,7 +302,8 @@ category_mapping = {
         "Engineering",
         "Intelligence",
         "Demolition",
-        "Misc. Equipment"
+        "Misc. Equipment",
+        "Incindiary"
     ],
     "Medical":[
         "Medical",
@@ -332,7 +333,7 @@ category_mapping = {
     ],
     "Shippables":[
         "Logistics",
-        "Emplacements",
+        "Emplacement",
         "Naval",
         "Large Structure",
         "Ballistic",
