@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-from PIL import ImageTk
+from PIL import ImageTk,Image
 class popup():
 
     messages = {
@@ -67,6 +67,6 @@ class popup():
         StockpileNameEntry.grid(row=8, column=0)
         self.stockpile_name_entry = StockpileNameEntry
 
-        self.popup_window.bind('<Return>',lambda :self.name_and_destroy())
+        self.popup_window.bind('<Return>',lambda x:self.name_and_destroy())
         self.ok["command"] = lambda:self.name_and_destroy()
 

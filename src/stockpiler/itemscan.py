@@ -181,6 +181,7 @@ def ItemScan(screen,config,items):
 				
 				if found != 1:
 					p = popup(config,"new_stock")
+					p.add_stockpile(stockpilename)
 					p.popup_window.wait_window()
 					new_stockpile_name = config.new_stockpile_name
 					if new_stockpile_name == "" or new_stockpile_name.lower() == "public":
@@ -229,14 +230,13 @@ def ItemScan(screen,config,items):
 			if config.ImgExport.get() == 1:
 				cv2.imwrite('Stockpiles//' + ThisStockpileName + ' image.png', stockpile)
 							
-			threshold = .98 if (config.experimentalResizing.get() == 1 and config.foxhole_height != 1080) else .99 
+			threshold = .98 if (config.experimentalResizing.get() == 1 and config.foxhole_height != 1080) else .96 
 			contents = []
 			for item in items.data:
-
 				if item.enabled != ButtonState.ENABLED:
+	
 					continue
-
-				if item.ind_exists !=1:
+				if item.ind_exists!="1":
 					if config.debug.get() == 1:
 						print("Skipping icon: ", item.name, "because ItemNumbering.csv lists it as impossible/never displayed in stockpile images (like pistol ammo and crates of warheads)")
 					continue
@@ -247,7 +247,6 @@ def ItemScan(screen,config,items):
 					item.set_scale(config.bestIconScale,config.bestTextScale)
 				try:
 					item.get_qnty(stockpile,threshold)
-
 					contents += item.get_contents()
 
 				except Exception as e:
@@ -290,11 +289,10 @@ def ItemScan(screen,config,items):
 					"guildID": config.BotGuildID.get()
 				}
 				data = []
-				for x in items.sortedcontents:
+				for x in sortedcontents:
 					data.append([x[1], x[2]])
 				requestObj["data"] = data
-
-				# print("Bot Data", data)
+				print("Bot Data", data)
 
 				try:
 					r = requests.post(config.BotHost.get(), json=requestObj, timeout=10)

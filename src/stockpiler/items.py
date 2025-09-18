@@ -64,12 +64,14 @@ class Item(object):
         self.img_paths = {
             "modded": os.path.join(root_dir,"CheckImages","Modded",self.id+".png"),
             "default":os.path.join(root_dir,"CheckImages","Default",self.id+".png"),
-            "modded_c":os.path.join(root_dir,"CheckImages","Default",self.id+"C.png"),
+            "modded_c":os.path.join(root_dir,"CheckImages","Modded",self.id+"C.png"),
             "default_c":os.path.join(root_dir,"CheckImages","Default",self.id+"C.png")
         }
         self.icon = os.path.join(root_dir,"UI",str(self.id)+".png")
         self.quantity = 0
         self.c_quantity = 0
+        self.icon_scale=1
+        self.text_scale=1
  
         self.enabled = ButtonState.ENABLED
         if os.path.exists(self.icon):
@@ -129,27 +131,31 @@ class Item(object):
     def get_qnty(self,stockpile,threshold):
         if self.search_normal:
             img_path = self.img_paths[self.tag]
-            not os.path.exists(img_path)
-            findimage = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-            if self.icon_scale != 1.0: 
-                findimage = cv2.resize(
-                    findimage, 
-                    (int(findimage.shape[1] * self.icon_scale), int(findimage.shape[0] * self.icon_scale)), 
-                    interpolation=cv2.INTER_LANCZOS4
-                )
-            self.quantity=self.__get_qnty(findimage,stockpile,threshold)
+            if not os.path.exists(img_path):
+                self.quantity=0
+            else:
+                findimage = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+                if self.icon_scale != 1.0: 
+                    findimage = cv2.resize(
+                        findimage, 
+                        (int(findimage.shape[1] * self.icon_scale), int(findimage.shape[0] * self.icon_scale)), 
+                        interpolation=cv2.INTER_LANCZOS4
+                    )
+                self.quantity=self.__get_qnty(findimage,stockpile,threshold)
 
         if self.search_crates:
             img_path = self.img_paths[self.tag+"_c"]
-            not os.path.exists(img_path)
-            findimage = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-            if self.icon_scale != 1.0: 
-                findimage = cv2.resize(
-                    findimage, 
-                    (int(findimage.shape[1] * self.icon_scale), int(findimage.shape[0] * self.icon_scale)), 
-                    interpolation=cv2.INTER_LANCZOS4
-                )
-            self.c_quantity = self.__get_qnty(findimage,stockpile,threshold)
+            if not os.path.exists(img_path):
+                self.c_quantity=0
+            else:
+                findimage = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+                if self.icon_scale != 1.0: 
+                    findimage = cv2.resize(
+                        findimage, 
+                        (int(findimage.shape[1] * self.icon_scale), int(findimage.shape[0] * self.icon_scale)), 
+                        interpolation=cv2.INTER_LANCZOS4
+                    )
+                self.c_quantity = self.__get_qnty(findimage,stockpile,threshold)
 
     def __get_qnty(self,icon,stockpile,threshold):
         
@@ -162,7 +168,7 @@ class Item(object):
 
             numberarea = stockpile[
                 int(y+8*self.text_scale):int(y+28*self.text_scale), 
-                int(x+45*self.text_scale ):int(x+87*self.text_scal)
+                int(x+45*self.text_scale ):int(x+87*self.text_scale)
             ]
 
             numberlist = []
@@ -188,6 +194,8 @@ class Item(object):
             if np.amax(k_res) > threshold:
                 quantity=quantity*1000
             return quantity
+        else:
+            return 0
         
     def get_contents(self):
         contents = []
@@ -231,6 +239,7 @@ class ItemList():
             # Skips first line
             header = next(csv_input)
             for rowdata in csv_input:
+                print(rowdata)
                 try:
                     item_id = int(rowdata[0])
                     print(item_id)
@@ -240,6 +249,7 @@ class ItemList():
                     enable_status = int(rowdata[1])
                     self.data[item_id].enabled = ButtonState(enable_status)
                 except ValueError:
+                    print("valueError",item_id)
                     self.data[item_id].enabled = ButtonState.DISABLED
 
 
