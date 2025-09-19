@@ -11,6 +11,7 @@ from stockpiler.items import ItemList
 from stockpiler.filter_ui import FilterTab
 from stockpiler.settings_ui import SettingsTab
 from stockpiler.table_ui import TableTab
+from stockpiler.order_ui import OrderTab
 from stockpiler.search_image import SearchImage
 from stockpiler.learn import Learn
 from stockpiler.itemscan import ItemScan
@@ -188,6 +189,7 @@ class Stockpiler():
 		settings_ui.set_hotkeys()
 
 		self.table_ui = TableTab(self)
+		self.order_ui = OrderTab(self)
 	
 	def update_results(self,data):
 		new_results = ItemList()
